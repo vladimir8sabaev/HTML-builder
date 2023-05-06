@@ -1,7 +1,5 @@
 const fs = require('fs');
 const path = require('path');
-const readline = require('readline');
-let arrHtml = [];
 fs.rm(path.join(__dirname, 'project-dist'), { recursive: true },()=>{
   fs.promises.mkdir(path.join(__dirname, 'project-dist'), {recursive: true})
     .then(function(){
@@ -23,38 +21,35 @@ fs.rm(path.join(__dirname, 'project-dist'), { recursive: true },()=>{
           console.log(err);
         });
     });
-  fs.promises.readdir(path.join(__dirname, 'components'),{withFileTypes: true})
-    .then(filenames => {
-      for (let filename of filenames) {
-        if(filename.isFile() && filename.name.split('.')[1] === 'html'){
-          arrHtml.push(`${filename.name.split('.')[0]}`);
-        }
-      }
-    })
-    .catch(err => {
-      console.log(err);
+  function streamAsPromise(stream) {
+    return new Promise((resolve, reject) => {
+      let data = '';
+      stream.on('data', chunk => data += chunk);
+      stream.on('end', () => {
+        resolve(data);
+      });
+      stream.on('error', error => reject(error));
     });
-  async function  processLineByLine() {
-    const rl = readline.promises.createInterface({
-      input: fs.createReadStream(path.join(__dirname, 'template.html')),
-      output: fs.createWriteStream(path.join(__dirname, 'project-dist', 'index.html'))
-    });
-    for await (let line of rl) {
-      line = line.trim();
-      if(arrHtml.indexOf(line.slice(2, line.length-2)) !== -1){
-        line = line.slice(2, line.length-2);
-        const readableStream = fs.createReadStream(path.join(__dirname, 'components', `${line}.html`), 'utf-8');
-        readableStream.on('error', error => console.log('Error', error.message));
-        let data = '';
-        readableStream.on('data', chunk => data+= chunk);
-        // обезопасился от файлов большого размера, которые не влезут в один chunk
-        await readableStream.on('end', () => rl.output.write(data + '\n'));
-      } else{
-        rl.output.write(line + '\n');
-      }
-    }
   }
-  processLineByLine();
+
+  async function replaceAsPromise(filenames,data){
+    for (let filename of filenames) {
+      await streamAsPromise(fs.createReadStream(path.join(__dirname, 'components', `${filename.name}`))).then((replace)=>{
+        data = data.replace(`{{${filename.name.split('.')[0]}}}`, replace);
+      });
+    }
+    return data;
+  }
+  streamAsPromise(fs.createReadStream(path.join(__dirname, 'template.html'))).then((data)=>{
+    const output = fs.createWriteStream(path.join(__dirname, 'project-dist', 'index.html'));
+    fs.promises.readdir(path.join(__dirname, 'components'),{withFileTypes: true})
+      .then(filenames => {
+        replaceAsPromise(filenames,data).then((template)=>{
+          output.write(template);
+        });
+      });
+  });
+
   fs.rm(path.join(__dirname, 'project-dist', 'assets'), { recursive: true },()=>{
     fs.promises.mkdir(path.join(__dirname, 'project-dist', 'assets'), {recursive: true})
       .then(copyFolder());
@@ -77,3 +72,11 @@ fs.rm(path.join(__dirname, 'project-dist'), { recursive: true },()=>{
 
 
 
+
+// let input = fs.createReadStream(path.join(__dirname, 'components', `${filename.name}`), 'utf-8');
+//             let replace = '';
+//             input.on('data', chunk => replace += chunk);
+//             input.on('end', (replace) => {
+//               console.log(replace);
+//               data = data.replace(`{{${filename.name.split('.')[0]}}}`, replace);
+//             });
