@@ -6,7 +6,7 @@ fs.promises.readdir(path.join(__dirname, 'secret-folder'),{withFileTypes: true})
       if(filename.isFile()){
         fs.stat(path.join(__dirname, 'secret-folder', `${filename.name}`), (err, stats) => {
           const size = stats.size;
-          console.log(`${filename.name.split('.')[0]} - ${filename.name.split('.')[1]} - ${size}`);
+          console.log(`${filename.name.split('.')[0]} - ${filename.name.split('.')[1]} - ${size}b`);
         });
       }
     }

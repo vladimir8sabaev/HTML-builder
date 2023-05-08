@@ -1,6 +1,8 @@
 const fs = require('fs');
 const path = require('path');
 const output = fs.createWriteStream(path.join(__dirname, 'project-dist', 'bundle.css'));
+const os = require('os');
+const EOL = os.EOL;
 fs.promises.readdir(path.join(__dirname, 'styles'),{withFileTypes: true})
   .then(filenames => {
     for (let filename of filenames) {
@@ -10,7 +12,7 @@ fs.promises.readdir(path.join(__dirname, 'styles'),{withFileTypes: true})
         let data = '';
         readableStream.on('data', chunk => data+= chunk);
         // обезопасился от файлов большого размера, которые не влезут в один chunk
-        readableStream.on('end', () => output.write(data + '\n'));
+        readableStream.on('end', () => output.write(`${data}${EOL}`));
       }
     }
   })

@@ -1,5 +1,7 @@
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
+const EOL = os.EOL;
 fs.rm(path.join(__dirname, 'project-dist'), { recursive: true },()=>{
   fs.promises.mkdir(path.join(__dirname, 'project-dist'), {recursive: true})
     .then(function(){
@@ -13,7 +15,7 @@ fs.rm(path.join(__dirname, 'project-dist'), { recursive: true },()=>{
               let data = '';
               readableStream.on('data', chunk => data+= chunk);
               // обезопасился от файлов большого размера, которые не влезут в один chunk
-              readableStream.on('end', () => output.write(data + '\n'));
+              readableStream.on('end', () => output.write(`${data}${EOL}`));
             }
           }
         })
@@ -69,14 +71,3 @@ fs.rm(path.join(__dirname, 'project-dist'), { recursive: true },()=>{
     });
   }
 });
-
-
-
-
-// let input = fs.createReadStream(path.join(__dirname, 'components', `${filename.name}`), 'utf-8');
-//             let replace = '';
-//             input.on('data', chunk => replace += chunk);
-//             input.on('end', (replace) => {
-//               console.log(replace);
-//               data = data.replace(`{{${filename.name.split('.')[0]}}}`, replace);
-//             });
