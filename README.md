@@ -1,6 +1,7 @@
 # HTML builder
 ---
-
+# PLEASE UPDATE NODE JS AND ESLINT VERSIONS AS IN MY PACKAGE.JSON
+---
 ### Цели:
 
 В данной серии заданий основной целью является понимание основ работы с платформой Node.js.  
